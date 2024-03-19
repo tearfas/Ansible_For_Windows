@@ -1,0 +1,46 @@
+###############  USAGE  #############################################
+####  ansible-playbook playbooks/PatchWindowsServersFinal.yml -k  ###
+#####################################################################
+
+---
+- name: Patch and Reboot Windows Servers If Required
+  hosts: 192.168.1.63
+  any_errors_fatal: false
+  serial:
+   - 1
+   - 5%
+   - 25%
+  max_fail_percentage: 10%
+  vars:
+    win_updates_categories:
+      - CriticalUpdates
+      - SecurityUpdates
+      - UpdateRollups
+      - Updates
+      - DefinitionUpdates
+
+  tasks:
+
+  - name: Search and Return List of Found Updates
+    win_updates:
+      state: searched
+      category_names: "{{ win_updates_categories }}"
+      log_path: C:\Available_Ptaches.txt
+    register: update_count
+    ignore_errors: yes
+
+  - name: Reboot if needed
+    win_shell: Restart-Computer -Force
+    when: update_count.reboot_required
+    ignore_errors: yes
+
+  - name: Install missing updates.
+    win_updates:
+      category_names: "{{ win_updates_categories }}"
+      log_path: C:\patch_log.txt
+    register: update_result
+
+  - name: Reboot if needed
+    win_shell: Restart-Computer -Force
+    when: update_result.reboot_required
+    ignore_errors: yes

@@ -1,0 +1,73 @@
+---
+
+- name: Install Windows agent.
+  block:
+  - name: Install Tenable Nessus Agent.
+    win_chocolatey:
+      name: Tenable.NessusAgent
+      source: "{{ chocolatey_source }}"
+      params: "/NessusGroups:{{ nessus_agent_group | default('WINDOWS') }} \
+        /NessusKey:{{ nessus_agent_key }}"
+      state: present
+    become: true
+    become_method: runas
+    notify: start Tenable Nessus Agent
+    tags:
+      - install
+
+  # Need to be elevated admin to read the nessus master.key file.
+  - name: Check Windows agent link status.
+    win_command: '"C:\Program Files\Tenable\Nessus Agent\nessuscli.exe" \
+      agent status'
+    become: true
+    ignore_errors: true
+    register: nessus_link
+    tags:
+    - configure
+
+  - name: "Debug: Nessus link status output."
+    debug:
+      var: nessus_link
+      verbosity: 3
+
+  # Need to be elevated admin to write the nessus master.key file.
+  - name: Link Windows Tenable Nessus Agent.
+    raw: "& 'C:\\Program Files\\Tenable\\Nessus Agent\\nessuscli.exe' \
+      agent link
+      --key={{ nessus_agent_key }} \
+      --host={{ nessus_agent_host }} \
+      --port={{ nessus_agent_port }} \
+      --groups='{{ nessus_agent_group | default('WINDOWS') }}'"
+    become: true
+    when:
+      - nessus_link is failed
+      - nessus_link.rc == 2
+    notify: restart Tenable Nessus Agent
+    ignore_errors: "{{ ansible_check_mode }}"
+    tags:
+      - configure
+  when: not nessus_unlink
+
+- name: Unlink Windows Tenable Nessus agent.
+  block:
+  - name: Check if Nessus Agent exists.
+    win_stat:
+      path: 'C:/Program Files/Tenable/Nessus Agent/nessuscli.exe'
+    register: nessus_installed
+    tags:
+      - unlink
+
+  - name: "Debug: Nessus agent installation status."
+    debug:
+      var: nessus_installed
+      verbosity: 3
+
+  - name: Unlink Windows Tenable Nessus Agent.
+    win_command: '"C:\Program Files\Tenable\Nessus Agent\nessuscli.exe" \
+      agent unlink'
+    ignore_errors: true
+    become: true
+    when: nessus_installed.exists
+    tags:
+      - unlink
+  when: nessus_unlink

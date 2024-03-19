@@ -1,0 +1,24 @@
+---
+- name: Demo win copy
+  hosts: 192.168.1.63
+  tasks:
+    - name: Create Folder
+      win_file:
+        path: C:\Temp\
+        state: directory
+
+    - name: Copy a single file
+      ansible.windows.win_copy:
+        src: text.txt
+        dest: C:\Temp\renamed-foo.conf
+
+    - name: Copy a single file, but keep a backup
+      ansible.windows.win_copy:
+        src: text.txt
+        dest: C:\Temp\renamed-foo.conf
+        backup: yes
+
+    - name: Copy a single file keeping the filename
+      ansible.windows.win_copy:
+        src: text.txt
+        dest: C:\Temp\

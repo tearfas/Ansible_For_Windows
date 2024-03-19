@@ -1,0 +1,25 @@
+---
+- name: Installing Apache MSI
+  hosts: 192.168.1.63
+  tasks:
+    - name: Create Download Folder
+      win_file:
+        path: C:\ansible-test
+        state: directory
+
+    - name: Download the Apache installer
+      win_get_url:
+        url: https://archive.apache.org/dist/httpd/binaries/win32/httpd-2.2.25-win32-x86-no_ssl.msi
+        dest: C:\ansible-test\httpd-2.2.25-win32-x86-no_ssl.msi
+
+    - name: Install MSI
+      win_package:
+        path: C:\ansible-test\httpd-2.2.25-win32-x86-no_ssl.msi
+        state: present
+
+    - name: Start Apache
+      ansible.windows.win_service:
+        path: C:\ansible-test\httpd-2.2.25-win32-x86-no_ssl.msi
+        name: httpd-2.2.25-win32-x86-no_ssl.msi
+        start_mode: auto
+        state: started

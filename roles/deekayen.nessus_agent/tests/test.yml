@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  remote_user: root
+  connection: local
+
+  roles:
+    - deekayen.nessus_agent

@@ -1,0 +1,9 @@
+---
+
+chocolatey_source: https://nexus.example.com/repository/nuget-hosted/
+
+nessus_agent_key: ""
+nessus_agent_host: cloud.tenable.com
+nessus_agent_port: 443
+
+nessus_unlink: false
